@@ -11,4 +11,7 @@ public interface StudentService extends Remote {
 
     List<Student> getAll() throws RemoteException;
     void updateStudent(Student student) throws RemoteException;
+    Student getStudentByCode(String code) throws RemoteException;
+
+
 }

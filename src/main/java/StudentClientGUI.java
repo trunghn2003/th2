@@ -1,4 +1,6 @@
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -8,28 +10,25 @@ public class StudentClientGUI extends JFrame {
     private JTextField nameField;
     private JTextField minGPAField;
     private JTextField maxGPAField;
-    private JPanel resultPanel;
+    private JTable studentTable;
+    private DefaultTableModel tableModel;
     private StudentClientControl studentControl;
 
     public StudentClientGUI() {
         setTitle("Student Search System");
-        setSize(600, 500);
+        setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        // Initialize the RMI control
         studentControl = new StudentClientControl();
 
-        // Setup GUI components
         JPanel inputPanel = new JPanel();
         inputPanel.setLayout(new GridLayout(3, 2, 10, 10));
 
-        // Name input
         inputPanel.add(new JLabel("Student Full Name:"));
         nameField = new JTextField();
         inputPanel.add(nameField);
 
-        // GPA input (min and max)
         inputPanel.add(new JLabel("Minimum GPA:"));
         minGPAField = new JTextField();
         inputPanel.add(minGPAField);
@@ -40,13 +39,21 @@ public class StudentClientGUI extends JFrame {
 
         add(inputPanel, BorderLayout.NORTH);
 
-        // Result panel (for student details and update buttons)
-        resultPanel = new JPanel();
-        resultPanel.setLayout(new BoxLayout(resultPanel, BoxLayout.Y_AXIS));
-        JScrollPane scrollPane = new JScrollPane(resultPanel);
+        String[] columnNames = {"Full Name", "Student Code", "Year of Birth", "Hometown", "GPA", "Update"};
+        tableModel = new DefaultTableModel(columnNames, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column != 6; 
+            }
+        };
+        studentTable = new JTable(tableModel);
+
+        studentTable.getColumn("Update").setCellRenderer(new ButtonRenderer());
+        studentTable.getColumn("Update").setCellEditor(new ButtonEditor(new JCheckBox()));
+
+        JScrollPane scrollPane = new JScrollPane(studentTable);
         add(scrollPane, BorderLayout.CENTER);
 
-        // Button panel
         JPanel buttonPanel = new JPanel();
         JButton searchByNameButton = new JButton("Search by Name");
         JButton searchByGPAButton = new JButton("Search by GPA Range");
@@ -54,7 +61,6 @@ public class StudentClientGUI extends JFrame {
         buttonPanel.add(searchByGPAButton);
         add(buttonPanel, BorderLayout.SOUTH);
 
-        // Add action listeners to buttons
         searchByNameButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -69,11 +75,9 @@ public class StudentClientGUI extends JFrame {
             }
         });
 
-        // Load all students when the GUI loads
         loadAllStudents();
     }
 
-    // Method to load and display all students when the application starts
     private void loadAllStudents() {
         try {
             List<Student> students = studentControl.getAllStudents();
@@ -115,83 +119,119 @@ public class StudentClientGUI extends JFrame {
         }
     }
 
-    // Method to display students with update buttons
+   
     private void displayResults(List<Student> students) {
-        resultPanel.removeAll();  // Clear previous results
+        tableModel.setRowCount(0); 
         if (students == null || students.isEmpty()) {
-            resultPanel.add(new JLabel("No students found."));
+            JOptionPane.showMessageDialog(this, "No students found.", "Result", JOptionPane.INFORMATION_MESSAGE);
         } else {
             for (Student student : students) {
-                JPanel studentPanel = new JPanel(new BorderLayout());
-
-                // Create label to display student info
-                JLabel studentLabel = new JLabel(student.toString());
-                studentPanel.add(studentLabel, BorderLayout.CENTER);
-
-                // Create update button for each student
-                JButton updateButton = new JButton("Update");
-                updateButton.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        updateStudent(student);
-                    }
-                });
-                studentPanel.add(updateButton, BorderLayout.EAST);
-
-                resultPanel.add(studentPanel);
+                Object[] row = {
+                        student.getFullName(),
+                        student.getStudentCode(),
+                        student.getYearOfBirth(),
+                        student.getHometown(),
+                        student.getGPA(),
+                        "Update"
+                };
+                tableModel.addRow(row);
             }
         }
-        resultPanel.revalidate();
-        resultPanel.repaint();
     }
 
-    // Method to update all attributes of the selected student (except the id)
-    private void updateStudent(Student student) {
-        // Create a dialog with multiple input fields for updating student attributes
-        JPanel updatePanel = new JPanel(new GridLayout(0, 2, 10, 10));
+    class ButtonRenderer extends JButton implements TableCellRenderer {
+        public ButtonRenderer() {
+            setOpaque(true);
+        }
 
-        // Name
-        updatePanel.add(new JLabel("Full Name:"));
-        JTextField nameField = new JTextField(student.getFullName());
-        updatePanel.add(nameField);
-
-        // Student Code
-        updatePanel.add(new JLabel("Student Code:"));
-        JTextField codeField = new JTextField(student.getStudentCode());
-        updatePanel.add(codeField);
-
-        // Year of Birth
-        updatePanel.add(new JLabel("Year of Birth:"));
-        JTextField yearField = new JTextField(String.valueOf(student.getYearOfBirth()));
-        updatePanel.add(yearField);
-
-        // Hometown
-        updatePanel.add(new JLabel("Hometown:"));
-        JTextField hometownField = new JTextField(student.getHometown());
-        updatePanel.add(hometownField);
-
-        // GPA
-        updatePanel.add(new JLabel("GPA:"));
-        JTextField gpaField = new JTextField(String.valueOf(student.getGPA()));
-        updatePanel.add(gpaField);
-
-        // Show dialog
-        int result = JOptionPane.showConfirmDialog(this, updatePanel, "Update Student", JOptionPane.OK_CANCEL_OPTION);
-        if (result == JOptionPane.OK_OPTION) {
-            // Update the student object with new values
-            student.setFullName(nameField.getText().trim());
-            student.setStudentCode(codeField.getText().trim());
-            student.setYearOfBirth(Integer.parseInt(yearField.getText().trim()));
-            student.setHometown(hometownField.getText().trim());
-            student.setGPA(Float.parseFloat(gpaField.getText().trim()));
-
-            // Simulate sending updated student data to the server
-            studentControl.updateStudent(student); // Call the method in the control class
-
-            JOptionPane.showMessageDialog(this, "Student updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-            loadAllStudents(); // Reload students to refresh the list
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            setText((value == null) ? "Update" : value.toString());
+            return this;
         }
     }
+
+    class ButtonEditor extends DefaultCellEditor {
+        protected JButton button;
+        private String label;
+        private boolean isPushed;
+        private int selectedRow;
+
+        public ButtonEditor(JCheckBox checkBox) {
+            super(checkBox);
+            button = new JButton();
+            button.setOpaque(true);
+            button.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    fireEditingStopped();
+                    updateStudent(selectedRow);
+                }
+            });
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+            selectedRow = row;
+            label = (value == null) ? "Update" : value.toString();
+            button.setText(label);
+            isPushed = true;
+            return button;
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            isPushed = false;
+            return label;
+        }
+
+        @Override
+        public boolean stopCellEditing() {
+            isPushed = false;
+            return super.stopCellEditing();
+        }
+
+        @Override
+        protected void fireEditingStopped() {
+            super.fireEditingStopped();
+        }
+    }
+  
+    private void updateStudent(int row) {
+        try {
+            String fullName = (String) tableModel.getValueAt(row, 0);
+            String studentCode = (String) tableModel.getValueAt(row, 1);
+            int yearOfBirth = Integer.parseInt(tableModel.getValueAt(row, 2).toString());
+            String hometown = (String) tableModel.getValueAt(row, 3);
+            float gpa = Float.parseFloat(tableModel.getValueAt(row, 4).toString());
+
+            Student student = studentControl.getStudentByCode(studentCode);
+
+            if (student != null) {
+                student.setFullName(fullName);
+                student.setYearOfBirth(yearOfBirth);
+                student.setHometown(hometown);
+                student.setGPA(gpa);
+
+                studentControl.updateStudent(student);
+
+                JOptionPane.showMessageDialog(this, "Student updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+
+                loadAllStudents(); 
+            } else {
+            
+                JOptionPane.showMessageDialog(this, "Student not found.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error updating student.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    public boolean isCellEditable(int row, int column) {
+        return column != 5;
+    }
+
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {

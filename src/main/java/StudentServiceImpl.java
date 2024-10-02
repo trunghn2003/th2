@@ -12,12 +12,9 @@ public class StudentServiceImpl extends UnicastRemoteObject implements StudentSe
     private Connection con;
     private String rmiService = "rmiStudentService";
 
-    // Constructor
     public StudentServiceImpl() throws RemoteException {
-        // Initialize the database connection
-        getDBConnection("th1", "root", "your_password");
+        getDBConnection("thuchanh1", "root", "trunghn2003");
 
-        // Register the RMI service
         try {
             registry = LocateRegistry.createRegistry(serverPort);
             registry.rebind(rmiService, this);
@@ -27,7 +24,6 @@ public class StudentServiceImpl extends UnicastRemoteObject implements StudentSe
         }
     }
 
-    // Method to search for students by full name
     @Override
     public List<Student> findByName(String name) throws RemoteException {
         List<Student> result = new ArrayList<>();
@@ -53,7 +49,6 @@ public class StudentServiceImpl extends UnicastRemoteObject implements StudentSe
         return result;
     }
 
-    // Method to search for students by GPA range
     @Override
     public List<Student> findByGPA(float minGPA, float maxGPA) throws RemoteException {
         List<Student> result = new ArrayList<>();
@@ -107,7 +102,6 @@ public class StudentServiceImpl extends UnicastRemoteObject implements StudentSe
 
     public void updateStudent(Student student) throws RemoteException {
         try {
-            // Prepare an SQL UPDATE query to update the student record in the database
             String query = "UPDATE students SET fullName = ?, studentCode = ?, yearOfBirth = ?, hometown = ?, GPA = ? WHERE studentId = ?";
             PreparedStatement stmt = con.prepareStatement(query);
             stmt.setString(1, student.getFullName());
@@ -129,10 +123,21 @@ public class StudentServiceImpl extends UnicastRemoteObject implements StudentSe
         }
     }
 
-    // Establish the database connection
+    @Override
+    public Student getStudentByCode(String code) throws RemoteException {
+        List<Student> result = this.getAll();
+        for (Student student : result) {
+            if (student.getStudentCode().equals(code)) {
+                return student;
+            }
+        }
+        return null;
+    }
+
+   
     private void getDBConnection(String dbName, String username, String password) {
         String dbUrl = "jdbc:mysql://localhost:3307/" + dbName;
-        String dbClass = "com.mysql.cj.jdbc.Driver"; // Updated driver class
+        String dbClass = "com.mysql.cj.jdbc.Driver"; 
 
         try {
             Class.forName(dbClass);

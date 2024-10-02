@@ -8,7 +8,7 @@ public class Student implements Serializable {
     private String hometown;
     private float GPA;
 
-    // Constructor, Getters, and Setters
+   
     public Student(int studentId, String studentCode, String fullName, int yearOfBirth, String hometown, float GPA) {
         this.studentId = studentId;
         this.studentCode = studentCode;
@@ -26,7 +26,7 @@ public class Student implements Serializable {
         return GPA;
     }
 
-    // Override toString to display student information
+   
     @Override
     public String toString() {
         return "Student{" +

@@ -13,10 +13,10 @@ public class StudentClientControl {
 
     public StudentClientControl() {
         try {
-            // Get the registry
+         
             registry = LocateRegistry.getRegistry(serverHost, serverPort);
 
-            // Lookup the StudentService
+       
             studentService = (StudentService) registry.lookup(rmiService);
             System.out.println("Connected to Student RMI Service");
         } catch (RemoteException e) {
@@ -28,7 +28,6 @@ public class StudentClientControl {
         }
     }
 
-    // Method to search students by name
     public List<Student> searchByName(String name) {
         List<Student> result = null;
         try {
@@ -40,7 +39,6 @@ public class StudentClientControl {
         return result;
     }
 
-    // Method to search students by GPA range
     public List<Student> searchByGPA(float minGPA, float maxGPA) {
         List<Student> result = null;
         try {
@@ -64,11 +62,22 @@ public class StudentClientControl {
 
     public void updateStudent(Student student) {
         try {
-            studentService.updateStudent(student);  // This will invoke the server-side update
+            studentService.updateStudent(student); 
         } catch (RemoteException e) {
             e.printStackTrace();
             System.out.println("Error updating student.");
         }
+    }
+    public Student getStudentByCode(String code) {
+        Student result = null;
+
+        try {
+            result = studentService.getStudentByCode(code);
+        }
+        catch (RemoteException e){
+            System.out.println(e);
+        }
+        return result;
     }
 
 }
