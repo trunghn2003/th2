@@ -31,8 +31,8 @@ public class StudentServiceImpl extends UnicastRemoteObject implements StudentSe
     @Override
     public List<Student> findByName(String name) throws RemoteException {
         List<Student> result = new ArrayList<>();
-        String query = "SELECT * FROM students WHERE fullName = '" + name + "'";
-
+        String query = "SELECT * FROM students WHERE fullName LIKE '%" + name + "%' ;";
+        System.out.println(query);
         try {
             Statement stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery(query);
@@ -58,7 +58,7 @@ public class StudentServiceImpl extends UnicastRemoteObject implements StudentSe
     public List<Student> findByGPA(float minGPA, float maxGPA) throws RemoteException {
         List<Student> result = new ArrayList<>();
         String query = "SELECT * FROM students WHERE GPA >= " + minGPA + " AND GPA <= " + maxGPA;
-
+        System.out.println(query);
         try {
             Statement stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery(query);
